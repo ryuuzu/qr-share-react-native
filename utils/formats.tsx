@@ -1,17 +1,15 @@
-type Account = {
-	accountNumber: string;
-	name: string;
-	bankType: string;
-};
+import { Account } from "../@types/account";
 
 export const getFormattedQrString = (account: Account) => {
 	let formattedQrString: string;
 	switch (account.bankType) {
 		case "eSewa":
-			formattedQrString = `{ "name": "${account.name}", "eSewa_id": "${account.accountNumber}" }`;
+			formattedQrString = `{ "name": "${account.accountName}", "eSewa_id": "${account.accountNumber}" }`;
 			break;
 		default:
-			formattedQrString = "failed";
+			formattedQrString = `{"accountNumber":"${
+				account.accountNumber
+			}","accountName":"${account.accountName.toUpperCase()}","bankCode":"${account.bankType.toUpperCase()}"}`;
 			break;
 	}
 	return formattedQrString;
@@ -22,6 +20,9 @@ export const getBankLogo = (account: Account) => {
 	switch (account.bankType) {
 		case "eSewa":
 			bankLogo = require("../assets/bank_logos/eSewa.png");
+			break;
+		case "SIDDNPKA":
+			bankLogo = require("../assets/bank_logos/SIDDNPKA.png");
 			break;
 		default:
 			break;
