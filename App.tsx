@@ -100,11 +100,6 @@ export default function App() {
 						},
 					]}
 				/>
-				{/* <FAB
-					icon="plus"
-					style={styles.fab}
-					onPress={() => showAddAccountModal()}
-				/> */}
 				<StatusBar style="auto" />
 			</View>
 		</PaperProvider>
@@ -117,13 +112,6 @@ const styles = StyleSheet.create({
 		backgroundColor: "#fff",
 		alignItems: "center",
 		justifyContent: "center",
-	},
-	fab: {
-		position: "absolute",
-		borderRadius: 28,
-		margin: 16,
-		right: 20,
-		bottom: 30,
 	},
 	showAddAccountContainerStyle: {
 		backgroundColor: "white",
