@@ -3,24 +3,60 @@ import { StatusBar } from "expo-status-bar";
 import { StyleSheet, Text, View } from "react-native";
 import { MainQrContainer } from "./components/mainQrContainer";
 import { QRsContainer } from "./components/qrsContainer";
-import { FAB, Modal, Portal } from "react-native-paper";
+import { FAB, Dialog, Portal, Snackbar } from "react-native-paper";
 import { Account } from "./@types/account";
 import { readData, saveData } from "./utils/filemanager";
 import { PaperProvider } from "react-native-paper";
+import { AccountForm } from "./components/accountForm";
 
 export default function App() {
 	const [accounts, setAccounts] = useState<Account[]>([]);
 	const [activeAccount, setActiveAccount] = useState<Account | null>(null);
+
+	// Modal for adding new account
 	const [isAddAccountModalVisible, setIsAddAccountModalVisible] =
 		useState<boolean>(false);
-	const [isAddFABGroupVisible, setIsAddFABGroupVisible] =
-		useState<boolean>(false);
-
 	const showAddAccountModal = () => setIsAddAccountModalVisible(true);
 	const hideAddAccountModal = () => setIsAddAccountModalVisible(false);
 
-	const onAddFABGroupStateChange = ({ open }) =>
+	// FABGroup for adding new account
+	const [isAddFABGroupVisible, setIsAddFABGroupVisible] =
+		useState<boolean>(false);
+	const onAddFABGroupStateChange = ({ open }: { open: boolean }) =>
 		setIsAddFABGroupVisible(open);
+
+	// Snackbar for showing errors
+	const [isSnackbarVisible, setIsSnackbarVisible] = useState<boolean>(false);
+	const [snackbarMessage, setSnackbarMessage] = useState<string>("");
+	const showSnackbar = (message: string) => {
+		setSnackbarMessage(message);
+		setIsSnackbarVisible(true);
+	};
+	const hideSnackbar = () => setIsSnackbarVisible(false);
+
+	const submitAddAccountForm = (
+		name: string,
+		accountNumber: string,
+		accountName: string,
+		bankType: string
+	): boolean => {
+		let id = name.toLowerCase().replace(" ", "") + accountNumber;
+		if (accounts.filter((account) => account.id === id).length > 0) {
+			showSnackbar("Account already exists");
+			return false;
+		} else {
+			const newAccount: Account = {
+				id,
+				name,
+				accountNumber,
+				accountName,
+				bankType,
+			};
+			setAccounts([...accounts, newAccount]);
+			hideAddAccountModal();
+			return true;
+		}
+	};
 
 	const initializeAndSaveAccounts = () => {
 		const initialAccountsData = [
@@ -70,17 +106,16 @@ export default function App() {
 					<Text>No Accounts Found</Text>
 				)}
 				<Portal>
-					<Modal
+					<Dialog
 						visible={isAddAccountModalVisible}
 						onDismiss={hideAddAccountModal}
-						contentContainerStyle={
-							styles.showAddAccountContainerStyle
-						}
+						style={styles.showAddAccountContainerStyle}
 					>
-						<Text>
-							Example Modal. Click outside this area to dismiss.
-						</Text>
-					</Modal>
+						<AccountForm
+							hideForm={hideAddAccountModal}
+							submitForm={submitAddAccountForm}
+						/>
+					</Dialog>
 				</Portal>
 				<FAB.Group
 					open={isAddFABGroupVisible}
@@ -100,6 +135,15 @@ export default function App() {
 						},
 					]}
 				/>
+				<Portal>
+					<Snackbar
+						visible={isSnackbarVisible}
+						onDismiss={hideSnackbar}
+						duration={3000}
+					>
+						{snackbarMessage}
+					</Snackbar>
+				</Portal>
 				<StatusBar style="auto" />
 			</View>
 		</PaperProvider>
