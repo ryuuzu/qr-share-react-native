@@ -84,11 +84,22 @@ export default function App() {
 	useEffect(() => {
 		readData().then((savedAccounts) => {
 			setAccounts(savedAccounts);
+			console.log(savedAccounts);
 			if (savedAccounts.length === 0) {
+				console.log(
+					"No accounts found. Initializing with default accounts"
+				);
 				initializeAndSaveAccounts();
 			}
 		});
 	}, []);
+
+	useEffect(() => {
+		console.log(accounts);
+		saveData(accounts).then(() => {
+			console.log("Data saved into the file");
+		});
+	}, [accounts]);
 
 	return (
 		<PaperProvider>
