@@ -13,10 +13,10 @@ type AccountFormProps = {
 };
 
 export const AccountForm = ({ hideForm, submitForm }: AccountFormProps) => {
-	const [name, setName] = useState("Utsav eSewa");
-	const [accountNumber, setAccountNumber] = useState("9862957119");
-	const [accountName, setAccountName] = useState("Utsav Gurmachhan Magar");
-	const [bankType, setBankType] = useState("eSewa");
+	const [name, setName] = useState("");
+	const [accountNumber, setAccountNumber] = useState("");
+	const [accountName, setAccountName] = useState("");
+	const [bankType, setBankType] = useState("");
 
 	const resetForm = () => {
 		setName("");
@@ -63,12 +63,7 @@ export const AccountForm = ({ hideForm, submitForm }: AccountFormProps) => {
 				</Button>
 				<Button
 					onPress={() => {
-						submitForm(
-							name,
-							accountNumber,
-							accountName,
-							bankType
-						);
+						submitForm(name, accountNumber, accountName, bankType);
 					}}
 				>
 					Submit
