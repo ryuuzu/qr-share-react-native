@@ -25,6 +25,7 @@ export const getBankLogo = (account: Account) => {
 			bankLogo = require("../assets/bank_logos/SIDDNPKA.png");
 			break;
 		default:
+			bankLogo = require("../assets/main-logo.png");
 			break;
 	}
 	return bankLogo;
