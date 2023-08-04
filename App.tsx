@@ -3,11 +3,12 @@ import { StatusBar } from "expo-status-bar";
 import { StyleSheet, Text, View } from "react-native";
 import { MainQrContainer } from "./components/mainQrContainer";
 import { QRsContainer } from "./components/qrsContainer";
-import { FAB, Dialog, Portal, Snackbar } from "react-native-paper";
+import { FAB, Dialog, Portal, Snackbar, Modal } from "react-native-paper";
 import { Account } from "./@types/account";
 import { readData, saveData } from "./utils/filemanager";
 import { PaperProvider } from "react-native-paper";
 import { AccountForm } from "./components/accountForm";
+import { BarCodeScanner } from "expo-barcode-scanner";
 
 export default function App() {
 	const [accounts, setAccounts] = useState<Account[]>([]);
@@ -33,6 +34,78 @@ export default function App() {
 		setIsSnackbarVisible(true);
 	};
 	const hideSnackbar = () => setIsSnackbarVisible(false);
+
+	// Barcode scanner settings
+	const [
+		hasPermissionsForBarCodeScanner,
+		setHasPermissionsForBarCodeScanner,
+	] = useState<boolean>(false);
+	const [displayScanner, setDisplayScanner] = useState<boolean>(false);
+
+	// Requesting permissions for barcode scanner
+	useEffect(() => {
+		(async () => {
+			const { status } = await BarCodeScanner.requestPermissionsAsync();
+			setHasPermissionsForBarCodeScanner(status === "granted");
+		})();
+	}, []);
+
+	// Handling barcode scanner
+	const handleBarCodeScanned = ({
+		type,
+		data,
+	}: {
+		type: string;
+		data: string;
+	}) => {
+		setDisplayScanner(false);
+		if (type !== "org.iso.QRCode") {
+			showSnackbar("Invalid QR Code");
+			return;
+		}
+		let qrData:
+			| {
+					accountNumber: string;
+					accountName: string;
+					bankCode: string;
+			  }
+			| {
+					name: string;
+					eSewa_id: string;
+			  };
+		try {
+			qrData = JSON.parse(data);
+		} catch (error) {
+			showSnackbar("Invalid QR Code");
+			return;
+		}
+
+		let newAccount: Account;
+
+		if (qrData.bankCode) {
+			newAccount = {
+				id:
+					qrData.accountName.toLowerCase().replace(" ", "") +
+					qrData.accountNumber,
+				name: `${qrData.accountName}'s ${qrData.bankCode}`,
+				accountNumber: qrData.accountNumber,
+				accountName: qrData.accountName,
+				bankType: qrData.bankCode,
+			};
+		} else if (qrData.eSewa_id) {
+			newAccount = {
+				id:
+					qrData.name.toLowerCase().replace(" ", "") +
+					qrData.eSewa_id,
+				name: `${qrData.name}'s eSewa`,
+				accountNumber: qrData.eSewa_id,
+				accountName: qrData.name,
+				bankType: "eSewa",
+			};
+		}
+
+		alert(`Bar code with type ${type} and data ${data} has been scanned!`);
+	};
 
 	const submitAddAccountForm = (
 		name: string,
@@ -76,15 +149,11 @@ export default function App() {
 			},
 		];
 		setAccounts(initialAccountsData);
-		saveData(initialAccountsData).then(() => {
-			console.log("Data saved into the file");
-		});
 	};
 
 	useEffect(() => {
 		readData().then((savedAccounts) => {
 			setAccounts(savedAccounts);
-			console.log(savedAccounts);
 			if (savedAccounts.length === 0) {
 				console.log(
 					"No accounts found. Initializing with default accounts"
@@ -95,10 +164,12 @@ export default function App() {
 	}, []);
 
 	useEffect(() => {
-		console.log(accounts);
-		saveData(accounts).then(() => {
-			console.log("Data saved into the file");
-		});
+		if (accounts.length > 0) {
+			saveData(accounts).then(() => {
+				console.log("Data saved into the file");
+				console.log(accounts);
+			});
+		}
 	}, [accounts]);
 
 	return (
@@ -142,10 +213,16 @@ export default function App() {
 						{
 							icon: "camera",
 							label: "Scan new account",
-							onPress: () => console.log("Pressed scan"),
+							onPress: () => setDisplayScanner(true),
 						},
 					]}
 				/>
+				{displayScanner && (
+					<BarCodeScanner
+						onBarCodeScanned={handleBarCodeScanned}
+						style={StyleSheet.absoluteFillObject}
+					/>
+				)}
 				<Portal>
 					<Snackbar
 						visible={isSnackbarVisible}

@@ -27,7 +27,7 @@ const QRDisplayContainer = ({
 			center
 			enableShadow
 			height={150}
-			selected={activeAccount && account.id === activeAccount.id}
+			selected={!!activeAccount && account.id === activeAccount.id}
 			borderRadius={18}
 			containerStyle={styles.qrContainer}
 			onPress={() => {

@@ -13,6 +13,7 @@ async function ensureDirExists() {
 }
 
 async function ensureDataFileExists() {
+	await ensureDirExists();
 	const fileInfo = await FileSystem.getInfoAsync(dataFileUri);
 	if (!fileInfo.exists) {
 		console.log("Data file doesn't exist, creating...");
