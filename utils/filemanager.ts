@@ -1,5 +1,5 @@
 import * as FileSystem from "expo-file-system";
-import { Account } from "../@types/account";
+import { Account } from "../@types/Account";
 
 const dataDir = FileSystem.documentDirectory + "data/";
 const dataFileUri = dataDir + "accounts.json";

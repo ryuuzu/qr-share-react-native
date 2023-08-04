@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View, Image } from "react-native";
 import { getBankLogo, getFormattedQrString } from "../utils/formats";
 import QRCode from "react-native-qrcode-svg";
-import { Account } from "../@types/account";
+import { Account } from "../@types/Account";
 
 type MainQrContainerProps = {
 	account: Account | null;

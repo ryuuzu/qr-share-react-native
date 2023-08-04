@@ -1,4 +1,4 @@
-import { Account } from "../@types/account";
+import { Account } from "../@types/Account";
 
 export const getFormattedQrString = (account: Account) => {
 	let formattedQrString: string;

@@ -3,18 +3,39 @@ import { StatusBar } from "expo-status-bar";
 import { StyleSheet, Text, View } from "react-native";
 import { MainQrContainer } from "./components/mainQrContainer";
 import { QRsContainer } from "./components/qrsContainer";
-import { FAB, Dialog, Portal, Snackbar, Modal } from "react-native-paper";
-import { Account, BankAccountData, eSewaAccountData } from "./@types/account";
+import {
+	FAB,
+	Dialog,
+	Portal,
+	Snackbar,
+	Modal,
+	Menu,
+	Divider,
+} from "react-native-paper";
+import { Account, BankAccountData, eSewaAccountData } from "./@types/Account";
 import { readData, saveData } from "./utils/filemanager";
 import { PaperProvider } from "react-native-paper";
 import { AccountForm } from "./components/accountForm";
 import { BarCodeScanner } from "expo-barcode-scanner";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { Platform } from "react-native";
+import { EventPressCoords } from "./@types/EventPress";
 
 export default function App() {
 	const [accounts, setAccounts] = useState<Account[]>([]);
 	const [activeAccount, setActiveAccount] = useState<Account | null>(null);
+
+	// Menu for selected account
+	const [selectedAccount, setSelectedAccount] = useState<Account | null>(
+		null
+	);
+	const [qrMenuLocation, setQrMenuLocation] = useState<EventPressCoords>({
+		x: 0,
+		y: 0,
+	});
+	const [isQrMenuVisible, setIsQrMenuVisible] = useState<boolean>(false);
+	const showQrMenu = () => setIsQrMenuVisible(true);
+	const hideQrMenu = () => setIsQrMenuVisible(false);
 
 	// Modal for adding new account
 	const [isAddAccountModalVisible, setIsAddAccountModalVisible] =
@@ -112,6 +133,10 @@ export default function App() {
 		}
 	};
 
+	useEffect(() => {
+		console.log(selectedAccount);
+	}, [selectedAccount]);
+
 	const submitAddAccountForm = (
 		name: string,
 		accountNumber: string,
@@ -179,23 +204,14 @@ export default function App() {
 								activeAccount={activeAccount}
 								setActiveAccount={setActiveAccount}
 								accounts={accounts}
+								setSelectedAccount={setSelectedAccount}
+								showQrMenu={showQrMenu}
+								setQrMenuLocation={setQrMenuLocation}
 							/>
 						</>
 					) : (
 						<Text>No Accounts Found</Text>
 					)}
-					<Portal>
-						<Dialog
-							visible={isAddAccountModalVisible}
-							onDismiss={hideAddAccountModal}
-							style={styles.showAddAccountContainerStyle}
-						>
-							<AccountForm
-								hideForm={hideAddAccountModal}
-								submitForm={submitAddAccountForm}
-							/>
-						</Dialog>
-					</Portal>
 					<FAB.Group
 						open={isAddFABGroupVisible}
 						visible
@@ -227,6 +243,33 @@ export default function App() {
 							/>
 						</Portal>
 					)}
+					<Portal>
+						<Menu
+							visible={isQrMenuVisible}
+							onDismiss={hideQrMenu}
+							anchor={{
+								x: qrMenuLocation.x,
+								y: qrMenuLocation.y,
+							}}
+						>
+							<Menu.Item onPress={() => {}} title="Item 1" />
+							<Menu.Item onPress={() => {}} title="Item 2" />
+							<Divider />
+							<Menu.Item onPress={() => {}} title="Item 3" />
+						</Menu>
+					</Portal>
+					<Portal>
+						<Dialog
+							visible={isAddAccountModalVisible}
+							onDismiss={hideAddAccountModal}
+							style={styles.showAddAccountContainerStyle}
+						>
+							<AccountForm
+								hideForm={hideAddAccountModal}
+								submitForm={submitAddAccountForm}
+							/>
+						</Dialog>
+					</Portal>
 					<Portal>
 						<Snackbar
 							visible={isSnackbarVisible}
