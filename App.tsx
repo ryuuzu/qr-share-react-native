@@ -49,6 +49,7 @@ export default function App() {
 	const onAddFABGroupStateChange = ({ open }: { open: boolean }) =>
 		setIsAddFABGroupVisible(open);
 
+	// Account Handling
 	const addAccount = (newAccount: Account) => {
 		if (
 			accounts.filter((account) => account.id === newAccount.id).length >
@@ -61,6 +62,11 @@ export default function App() {
 			showSnackbar("Account added successfully");
 			return true;
 		}
+	};
+
+	const deleteAccount = (account: Account) => {
+		setAccounts(accounts.filter((acc) => acc.id !== account.id));
+		showSnackbar("Account deleted successfully");
 	};
 
 	// Snackbar for showing errors
@@ -252,12 +258,23 @@ export default function App() {
 								y: qrMenuLocation.y,
 							}}
 						>
-							<Menu.Item onPress={() => {}} title="Item 1" />
-							<Menu.Item onPress={() => {}} title="Item 2" />
-							<Divider />
-							<Menu.Item onPress={() => {}} title="Item 3" />
+							<Menu.Item
+								leadingIcon={"pencil"}
+								onPress={() => {}}
+								title="Edit"
+							/>
+							<Menu.Item
+								leadingIcon={"delete"}
+								onPress={() => {
+									deleteAccount(selectedAccount!);
+									setSelectedAccount(null);
+									hideQrMenu();
+								}}
+								title="Delete"
+							/>
 						</Menu>
 					</Portal>
+					{/* Account Handling Modals/Dialogs */}
 					<Portal>
 						<Dialog
 							visible={isAddAccountModalVisible}

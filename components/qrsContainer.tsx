@@ -46,7 +46,6 @@ const QRDisplayContainer = ({
 					: setActiveAccount(account);
 			}}
 			onLongPress={(e: any) => {
-				console.log(e.event.nativeEvent);
 				setQrMenuLocation({
 					x: e.event.nativeEvent.pageX,
 					y: e.event.nativeEvent.pageY,
