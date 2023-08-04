@@ -4,11 +4,13 @@ import { StyleSheet, Text, View } from "react-native";
 import { MainQrContainer } from "./components/mainQrContainer";
 import { QRsContainer } from "./components/qrsContainer";
 import { FAB, Dialog, Portal, Snackbar, Modal } from "react-native-paper";
-import { Account } from "./@types/account";
+import { Account, BankAccountData, eSewaAccountData } from "./@types/account";
 import { readData, saveData } from "./utils/filemanager";
 import { PaperProvider } from "react-native-paper";
 import { AccountForm } from "./components/accountForm";
 import { BarCodeScanner } from "expo-barcode-scanner";
+import { SafeAreaProvider } from "react-native-safe-area-context";
+import { Platform } from "react-native";
 
 export default function App() {
 	const [accounts, setAccounts] = useState<Account[]>([]);
@@ -25,6 +27,20 @@ export default function App() {
 		useState<boolean>(false);
 	const onAddFABGroupStateChange = ({ open }: { open: boolean }) =>
 		setIsAddFABGroupVisible(open);
+
+	const addAccount = (newAccount: Account) => {
+		if (
+			accounts.filter((account) => account.id === newAccount.id).length >
+			0
+		) {
+			showSnackbar("Account already exists");
+			return false;
+		} else {
+			setAccounts([...accounts, newAccount]);
+			showSnackbar("Account added successfully");
+			return true;
+		}
+	};
 
 	// Snackbar for showing errors
 	const [isSnackbarVisible, setIsSnackbarVisible] = useState<boolean>(false);
@@ -59,20 +75,7 @@ export default function App() {
 		data: string;
 	}) => {
 		setDisplayScanner(false);
-		if (type !== "org.iso.QRCode") {
-			showSnackbar("Invalid QR Code");
-			return;
-		}
-		let qrData:
-			| {
-					accountNumber: string;
-					accountName: string;
-					bankCode: string;
-			  }
-			| {
-					name: string;
-					eSewa_id: string;
-			  };
+		let qrData: BankAccountData | eSewaAccountData;
 		try {
 			qrData = JSON.parse(data);
 		} catch (error) {
@@ -82,29 +85,31 @@ export default function App() {
 
 		let newAccount: Account;
 
-		if (qrData.bankCode) {
+		if ("bankCode" in qrData) {
 			newAccount = {
 				id:
-					qrData.accountName.toLowerCase().replace(" ", "") +
+					qrData.accountName.toLowerCase().replaceAll(" ", "") +
 					qrData.accountNumber,
 				name: `${qrData.accountName}'s ${qrData.bankCode}`,
 				accountNumber: qrData.accountNumber,
 				accountName: qrData.accountName,
 				bankType: qrData.bankCode,
 			};
-		} else if (qrData.eSewa_id) {
+			addAccount(newAccount);
+		} else if ("eSewa_id" in qrData) {
 			newAccount = {
 				id:
-					qrData.name.toLowerCase().replace(" ", "") +
+					qrData.name.toLowerCase().replaceAll(" ", "") +
 					qrData.eSewa_id,
 				name: `${qrData.name}'s eSewa`,
 				accountNumber: qrData.eSewa_id,
 				accountName: qrData.name,
 				bankType: "eSewa",
 			};
+			addAccount(newAccount);
+		} else {
+			showSnackbar("Invalid QR Code");
 		}
-
-		alert(`Bar code with type ${type} and data ${data} has been scanned!`);
 	};
 
 	const submitAddAccountForm = (
@@ -114,38 +119,29 @@ export default function App() {
 		bankType: string
 	): boolean => {
 		let id = name.toLowerCase().replace(" ", "") + accountNumber;
-		if (accounts.filter((account) => account.id === id).length > 0) {
-			showSnackbar("Account already exists");
+		const newAccount: Account = {
+			id,
+			name,
+			accountNumber,
+			accountName,
+			bankType,
+		};
+		let accountCreated = addAccount(newAccount);
+		if (!accountCreated) {
 			return false;
-		} else {
-			const newAccount: Account = {
-				id,
-				name,
-				accountNumber,
-				accountName,
-				bankType,
-			};
-			setAccounts([...accounts, newAccount]);
-			hideAddAccountModal();
-			return true;
 		}
+		hideAddAccountModal();
+		return true;
 	};
 
 	const initializeAndSaveAccounts = () => {
 		const initialAccountsData = [
 			{
 				id: "es1",
-				name: "eSewa",
+				name: "Ryuuzu's eSewa Account",
 				accountNumber: "9862957119",
 				accountName: "Utsav Gurmachhan Magar",
 				bankType: "eSewa",
-			},
-			{
-				id: "es2",
-				name: "Siddhartha Bank",
-				accountNumber: "55502521937",
-				accountName: "Utsav Gurmachhan Magar",
-				bankType: "SIDDNPKA",
 			},
 		];
 		setAccounts(initialAccountsData);
@@ -156,7 +152,7 @@ export default function App() {
 			setAccounts(savedAccounts);
 			if (savedAccounts.length === 0) {
 				console.log(
-					"No accounts found. Initializing with default accounts"
+					`${Platform.OS}: No accounts found. Initializing with default accounts`
 				);
 				initializeAndSaveAccounts();
 			}
@@ -166,75 +162,84 @@ export default function App() {
 	useEffect(() => {
 		if (accounts.length > 0) {
 			saveData(accounts).then(() => {
-				console.log("Data saved into the file");
-				console.log(accounts);
+				console.log(`${Platform.OS}: Data saved into the file`);
+				console.log(`${Platform.OS}:`, accounts);
 			});
 		}
 	}, [accounts]);
 
 	return (
-		<PaperProvider>
-			<View style={styles.container}>
-				{accounts.length > 0 ? (
-					<>
-						<MainQrContainer account={activeAccount} />
-						<QRsContainer
-							activeAccount={activeAccount}
-							setActiveAccount={setActiveAccount}
-							accounts={accounts}
-						/>
-					</>
-				) : (
-					<Text>No Accounts Found</Text>
-				)}
-				<Portal>
-					<Dialog
-						visible={isAddAccountModalVisible}
-						onDismiss={hideAddAccountModal}
-						style={styles.showAddAccountContainerStyle}
-					>
-						<AccountForm
-							hideForm={hideAddAccountModal}
-							submitForm={submitAddAccountForm}
-						/>
-					</Dialog>
-				</Portal>
-				<FAB.Group
-					open={isAddFABGroupVisible}
-					visible
-					onStateChange={onAddFABGroupStateChange}
-					icon={isAddFABGroupVisible ? "close" : "plus"}
-					actions={[
-						{
-							icon: "plus",
-							label: "Add new account",
-							onPress: () => showAddAccountModal(),
-						},
-						{
-							icon: "camera",
-							label: "Scan new account",
-							onPress: () => setDisplayScanner(true),
-						},
-					]}
-				/>
-				{displayScanner && (
-					<BarCodeScanner
-						onBarCodeScanned={handleBarCodeScanned}
-						style={StyleSheet.absoluteFillObject}
+		<SafeAreaProvider>
+			<PaperProvider>
+				<View style={styles.container}>
+					{accounts.length > 0 ? (
+						<>
+							<MainQrContainer account={activeAccount} />
+							<QRsContainer
+								activeAccount={activeAccount}
+								setActiveAccount={setActiveAccount}
+								accounts={accounts}
+							/>
+						</>
+					) : (
+						<Text>No Accounts Found</Text>
+					)}
+					<Portal>
+						<Dialog
+							visible={isAddAccountModalVisible}
+							onDismiss={hideAddAccountModal}
+							style={styles.showAddAccountContainerStyle}
+						>
+							<AccountForm
+								hideForm={hideAddAccountModal}
+								submitForm={submitAddAccountForm}
+							/>
+						</Dialog>
+					</Portal>
+					<FAB.Group
+						open={isAddFABGroupVisible}
+						visible
+						onStateChange={onAddFABGroupStateChange}
+						icon={isAddFABGroupVisible ? "close" : "plus"}
+						actions={[
+							{
+								icon: "plus",
+								label: "Add new account",
+								onPress: () => showAddAccountModal(),
+							},
+							{
+								icon: "camera",
+								label: "Scan new account",
+								onPress: () => setDisplayScanner(true),
+							},
+						]}
 					/>
-				)}
-				<Portal>
-					<Snackbar
-						visible={isSnackbarVisible}
-						onDismiss={hideSnackbar}
-						duration={3000}
-					>
-						{snackbarMessage}
-					</Snackbar>
-				</Portal>
-				<StatusBar style="auto" />
-			</View>
-		</PaperProvider>
+					{displayScanner && (
+						<Portal>
+							<BarCodeScanner
+								onBarCodeScanned={handleBarCodeScanned}
+								style={StyleSheet.absoluteFillObject}
+							/>
+							<FAB
+								icon="close"
+								style={styles.scannerFab}
+								onPress={() => setDisplayScanner(false)}
+							/>
+						</Portal>
+					)}
+					<Portal>
+						<Snackbar
+							visible={isSnackbarVisible}
+							onDismiss={hideSnackbar}
+							duration={3000}
+						>
+							{snackbarMessage}
+						</Snackbar>
+					</Portal>
+					<StatusBar style="auto" />
+				</View>
+			</PaperProvider>
+		</SafeAreaProvider>
 	);
 }
 
@@ -250,5 +255,11 @@ const styles = StyleSheet.create({
 		borderRadius: 18,
 		padding: 20,
 		margin: 16,
+	},
+	scannerFab: {
+		position: "absolute",
+		top: 50,
+		right: 30,
+		borderRadius: 28,
 	},
 });
