@@ -8,9 +8,8 @@ import {
 	Dialog,
 	Portal,
 	Snackbar,
-	Modal,
 	Menu,
-	Divider,
+	Button,
 } from "react-native-paper";
 import { Account, BankAccountData, eSewaAccountData } from "./@types/Account";
 import { readData, saveData } from "./utils/filemanager";
@@ -37,11 +36,18 @@ export default function App() {
 	const showQrMenu = () => setIsQrMenuVisible(true);
 	const hideQrMenu = () => setIsQrMenuVisible(false);
 
-	// Modal for adding new account
-	const [isAddAccountModalVisible, setIsAddAccountModalVisible] =
+	// Dialog for deleting account
+	const [isDeleteAccountDialogVisible, setIsDeleteAccountDialogVisible] =
 		useState<boolean>(false);
-	const showAddAccountModal = () => setIsAddAccountModalVisible(true);
-	const hideAddAccountModal = () => setIsAddAccountModalVisible(false);
+	const showDeleteAccountDialog = () => setIsDeleteAccountDialogVisible(true);
+	const hideDeleteAccountDialog = () =>
+		setIsDeleteAccountDialogVisible(false);
+
+	// Dialog for adding new account
+	const [isAddAccountDialogVisible, setIsAddAccountDialogVisible] =
+		useState<boolean>(false);
+	const showAddAccountDialog = () => setIsAddAccountDialogVisible(true);
+	const hideAddAccountDialog = () => setIsAddAccountDialogVisible(false);
 
 	// FABGroup for adding new account
 	const [isAddFABGroupVisible, setIsAddFABGroupVisible] =
@@ -161,7 +167,7 @@ export default function App() {
 		if (!accountCreated) {
 			return false;
 		}
-		hideAddAccountModal();
+		hideAddAccountDialog();
 		return true;
 	};
 
@@ -227,7 +233,7 @@ export default function App() {
 							{
 								icon: "plus",
 								label: "Add new account",
-								onPress: () => showAddAccountModal(),
+								onPress: () => showAddAccountDialog(),
 							},
 							{
 								icon: "camera",
@@ -266,8 +272,7 @@ export default function App() {
 							<Menu.Item
 								leadingIcon={"delete"}
 								onPress={() => {
-									deleteAccount(selectedAccount!);
-									setSelectedAccount(null);
+									showDeleteAccountDialog();
 									hideQrMenu();
 								}}
 								title="Delete"
@@ -277,14 +282,49 @@ export default function App() {
 					{/* Account Handling Modals/Dialogs */}
 					<Portal>
 						<Dialog
-							visible={isAddAccountModalVisible}
-							onDismiss={hideAddAccountModal}
-							style={styles.showAddAccountContainerStyle}
+							visible={isAddAccountDialogVisible}
+							onDismiss={hideAddAccountDialog}
+							style={styles.addAccountContainerStyle}
 						>
 							<AccountForm
-								hideForm={hideAddAccountModal}
+								hideForm={hideAddAccountDialog}
 								submitForm={submitAddAccountForm}
 							/>
+						</Dialog>
+						<Dialog
+							visible={isDeleteAccountDialogVisible}
+							onDismiss={hideDeleteAccountDialog}
+							style={styles.deleteAccountContainerStyle}
+						>
+							<Dialog.Icon
+								icon="alert-circle"
+								color="red"
+								size={48}
+							/>
+							<Dialog.Title>Confirm Delete</Dialog.Title>
+							<Dialog.Content>
+								<Text>
+									Are you sure you want to delete{" "}
+									{selectedAccount?.name} account?
+								</Text>
+							</Dialog.Content>
+							<Dialog.Actions>
+								<Button
+									labelStyle={{ color: "red" }}
+									onPress={() => hideDeleteAccountDialog()}
+								>
+									Cancel
+								</Button>
+								<Button
+									onPress={() => {
+										deleteAccount(selectedAccount!);
+										setSelectedAccount(null);
+										hideDeleteAccountDialog();
+									}}
+								>
+									Delete
+								</Button>
+							</Dialog.Actions>
 						</Dialog>
 					</Portal>
 					<Portal>
@@ -310,11 +350,15 @@ const styles = StyleSheet.create({
 		alignItems: "center",
 		justifyContent: "center",
 	},
-	showAddAccountContainerStyle: {
+	addAccountContainerStyle: {
 		backgroundColor: "white",
 		borderRadius: 18,
 		padding: 20,
 		margin: 16,
+	},
+	deleteAccountContainerStyle: {
+		backgroundColor: "white",
+		borderRadius: 18,
 	},
 	scannerFab: {
 		position: "absolute",
