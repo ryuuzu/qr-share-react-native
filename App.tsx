@@ -34,7 +34,10 @@ export default function App() {
 	});
 	const [isQrMenuVisible, setIsQrMenuVisible] = useState<boolean>(false);
 	const showQrMenu = () => setIsQrMenuVisible(true);
-	const hideQrMenu = () => setIsQrMenuVisible(false);
+	const hideQrMenu = () => {
+		setIsQrMenuVisible(false);
+		setSelectedAccount(null);
+	};
 
 	// Dialog for deleting account
 	const [isDeleteAccountDialogVisible, setIsDeleteAccountDialogVisible] =
@@ -144,10 +147,6 @@ export default function App() {
 			showSnackbar("Invalid QR Code");
 		}
 	};
-
-	useEffect(() => {
-		console.log(selectedAccount);
-	}, [selectedAccount]);
 
 	const submitAddAccountForm = (
 		name: string,
