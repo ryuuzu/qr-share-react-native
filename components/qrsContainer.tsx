@@ -94,6 +94,7 @@ export const QRsContainer = ({
 const styles = StyleSheet.create({
 	qrsContainer: {
 		height: "30%",
+		width: "100%",
 		backgroundColor: "lightgray",
 	},
 	qrGridList: {

@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { View } from "react-native";
 import { TextInput, Dialog, Button } from "react-native-paper";
+import { Account } from "../@types/Account";
 
 type AccountFormProps = {
 	hideForm: () => void;
@@ -10,13 +11,22 @@ type AccountFormProps = {
 		accountName: string,
 		bankType: string
 	) => boolean;
+	account: Account | null;
 };
 
-export const AccountForm = ({ hideForm, submitForm }: AccountFormProps) => {
-	const [name, setName] = useState("");
-	const [accountNumber, setAccountNumber] = useState("");
-	const [accountName, setAccountName] = useState("");
-	const [bankType, setBankType] = useState("");
+export const AccountForm = ({
+	hideForm,
+	submitForm,
+	account,
+}: AccountFormProps) => {
+	const [name, setName] = useState(account ? account.name : "");
+	const [accountNumber, setAccountNumber] = useState(
+		account ? account.accountNumber : ""
+	);
+	const [accountName, setAccountName] = useState(
+		account ? account.accountName : ""
+	);
+	const [bankType, setBankType] = useState(account ? account.bankType : "");
 
 	const resetForm = () => {
 		setName("");

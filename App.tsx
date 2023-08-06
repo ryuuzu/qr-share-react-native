@@ -36,7 +36,6 @@ export default function App() {
 	const showQrMenu = () => setIsQrMenuVisible(true);
 	const hideQrMenu = () => {
 		setIsQrMenuVisible(false);
-		setSelectedAccount(null);
 	};
 
 	// Dialog for deleting account
@@ -51,6 +50,12 @@ export default function App() {
 		useState<boolean>(false);
 	const showAddAccountDialog = () => setIsAddAccountDialogVisible(true);
 	const hideAddAccountDialog = () => setIsAddAccountDialogVisible(false);
+
+	// Dialog for editing account
+	const [isEditAccountDialogVisible, setIsEditAccountDialogVisible] =
+		useState<boolean>(false);
+	const showEditAccountDialog = () => setIsEditAccountDialogVisible(true);
+	const hideEditAccountDialog = () => setIsEditAccountDialogVisible(false);
 
 	// FABGroup for adding new account
 	const [isAddFABGroupVisible, setIsAddFABGroupVisible] =
@@ -170,6 +175,30 @@ export default function App() {
 		return true;
 	};
 
+	const submitEditAccountForm = (
+		name: string,
+		accountNumber: string,
+		accountName: string,
+		bankType: string
+	): boolean => {
+		let editAccountIndex = accounts.findIndex(
+			(account) => account.id === selectedAccount?.id
+		);
+		setAccounts([
+			...accounts.slice(0, editAccountIndex),
+			{
+				id: selectedAccount?.id!,
+				name,
+				accountNumber,
+				accountName,
+				bankType,
+			},
+			...accounts.slice(editAccountIndex + 1),
+		]);
+		hideEditAccountDialog();
+		return true;
+	};
+
 	const initializeAndSaveAccounts = () => {
 		const initialAccountsData = [
 			{
@@ -265,7 +294,10 @@ export default function App() {
 						>
 							<Menu.Item
 								leadingIcon={"pencil"}
-								onPress={() => {}}
+								onPress={() => {
+									showEditAccountDialog();
+									hideQrMenu();
+								}}
 								title="Edit"
 							/>
 							<Menu.Item
@@ -288,6 +320,18 @@ export default function App() {
 							<AccountForm
 								hideForm={hideAddAccountDialog}
 								submitForm={submitAddAccountForm}
+								account={null}
+							/>
+						</Dialog>
+						<Dialog
+							visible={isEditAccountDialogVisible}
+							onDismiss={hideEditAccountDialog}
+							style={styles.addAccountContainerStyle}
+						>
+							<AccountForm
+								hideForm={hideEditAccountDialog}
+								submitForm={submitEditAccountForm}
+								account={selectedAccount}
 							/>
 						</Dialog>
 						<Dialog
