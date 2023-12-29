@@ -17,16 +17,18 @@ export const getFormattedQrString = (account: Account) => {
 
 export const getBankLogo = (account: Account) => {
 	let bankLogo;
-	switch (account.bankType) {
-		case "eSewa":
-			bankLogo = require("../assets/bank_logos/eSewa.png");
-			break;
-		case "SIDDNPKA":
-			bankLogo = require("../assets/bank_logos/SIDDNPKA.png");
-			break;
-		default:
-			bankLogo = require("../assets/main-logo.png");
-			break;
+	if (account.bankType === "eSewa") {
+		bankLogo = require("../assets/bank_logos/eSewa.png");
+	} else if (account.bankType.endsWith("NPKA")) {
+		bankLogo = {
+			uri: `https://raw.githubusercontent.com/ryuuzu/bank-logos/main/${account.bankType}.png`,
+		};
+	} else {
+		bankLogo = require("../assets/main-logo.png");
 	}
 	return bankLogo;
+};
+
+export const getDefaultBankLogo = () => {
+	return require("../assets/main-logo.png");
 };
