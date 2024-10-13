@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from "react-native";
 import { Image } from "expo-image";
-import { getBankLogo, getFormattedQrString } from "../utils/formats";
+import { getFormattedQrString } from "../utils/formats";
 import QRCode from "react-native-qrcode-svg";
 import { Account } from "../@types/account";
 import React from "react";

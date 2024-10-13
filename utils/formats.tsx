@@ -1,4 +1,4 @@
-import { Account } from "../@types/Account";
+import { Account } from "../@types/account";
 
 export const getFormattedQrString = (account: Account) => {
 	let formattedQrString: string;
@@ -13,20 +13,4 @@ export const getFormattedQrString = (account: Account) => {
 			break;
 	}
 	return formattedQrString;
-};
-
-export const getBankLogo = (account: Account) => {
-	let bankLogo;
-	switch (account.bankType) {
-		case "eSewa":
-			bankLogo = require("../assets/bank_logos/eSewa.png");
-			break;
-		case "SIDDNPKA":
-			bankLogo = require("../assets/bank_logos/SIDDNPKA.png");
-			break;
-		default:
-			bankLogo = require("../assets/main-logo.png");
-			break;
-	}
-	return bankLogo;
 };

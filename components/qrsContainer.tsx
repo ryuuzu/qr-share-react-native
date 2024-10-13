@@ -3,7 +3,6 @@ import { Image } from "expo-image";
 import { Account } from "../@types/account";
 import { GridList, Card } from "react-native-ui-lib";
 import { Spacings } from "react-native-ui-lib/src/style";
-import { getBankLogo } from "../utils/formats";
 import { EventPressCoords } from "../@types/EventPress";
 
 type QRsContainerProps = {

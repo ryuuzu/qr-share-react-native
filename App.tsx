@@ -274,11 +274,11 @@ export default function App() {
 								y: qrMenuLocation.y,
 							}}
 						>
-							<Menu.Item
+							{/* <Menu.Item
 								leadingIcon={"pencil"}
 								onPress={() => {}}
 								title="Edit"
-							/>
+							/> */}
 							<Menu.Item
 								leadingIcon={"delete"}
 								onPress={() => {
