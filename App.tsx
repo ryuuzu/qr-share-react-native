@@ -3,6 +3,7 @@ import { StatusBar } from "expo-status-bar";
 import { StyleSheet, Text, View } from "react-native";
 import { MainQrContainer } from "./components/mainQrContainer";
 import { QRsContainer } from "./components/qrsContainer";
+import { CameraView, CameraType, useCameraPermissions } from "expo-camera";
 import {
 	FAB,
 	Dialog,
@@ -11,7 +12,7 @@ import {
 	Menu,
 	Button,
 } from "react-native-paper";
-import { Account, BankAccountData, eSewaAccountData } from "./@types/Account";
+import { Account, BankAccountData, eSewaAccountData } from "./@types/account";
 import { readData, saveData } from "./utils/filemanager";
 import { PaperProvider } from "react-native-paper";
 import { AccountForm } from "./components/accountForm";
@@ -19,6 +20,7 @@ import { BarCodeScanner } from "expo-barcode-scanner";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { Platform } from "react-native";
 import { EventPressCoords } from "./@types/EventPress";
+import React from "react";
 
 export default function App() {
 	const [accounts, setAccounts] = useState<Account[]>([]);
@@ -88,6 +90,7 @@ export default function App() {
 	const hideSnackbar = () => setIsSnackbarVisible(false);
 
 	// Barcode scanner settings
+	const [permission, requestPermission] = useCameraPermissions();
 	const [
 		hasPermissionsForBarCodeScanner,
 		setHasPermissionsForBarCodeScanner,
@@ -97,8 +100,11 @@ export default function App() {
 	// Requesting permissions for barcode scanner
 	useEffect(() => {
 		(async () => {
-			const { status } = await BarCodeScanner.requestPermissionsAsync();
-			setHasPermissionsForBarCodeScanner(status === "granted");
+			if (permission?.status === "denied") {
+				showSnackbar("Camera permission is required to scan QR Codes");
+			} else if (permission?.canAskAgain) {
+				await requestPermission();
+			}
 		})();
 	}, []);
 
@@ -243,15 +249,20 @@ export default function App() {
 					/>
 					{displayScanner && (
 						<Portal>
-							<BarCodeScanner
-								onBarCodeScanned={handleBarCodeScanned}
+							<CameraView
+								facing="back"
+								onBarcodeScanned={handleBarCodeScanned}
+								barcodeScannerSettings={{
+									barcodeTypes: ["qr"],
+								}}
 								style={StyleSheet.absoluteFillObject}
-							/>
-							<FAB
-								icon="close"
-								style={styles.scannerFab}
-								onPress={() => setDisplayScanner(false)}
-							/>
+							>
+								<FAB
+									icon="close"
+									style={styles.scannerFab}
+									onPress={() => setDisplayScanner(false)}
+								/>
+							</CameraView>
 						</Portal>
 					)}
 					<Portal>
@@ -316,7 +327,7 @@ export default function App() {
 								</Button>
 								<Button
 									onPress={() => {
-										deleteAccount(selectedAccount!);
+										deleteAccount(activeAccount!);
 										setSelectedAccount(null);
 										hideDeleteAccountDialog();
 									}}

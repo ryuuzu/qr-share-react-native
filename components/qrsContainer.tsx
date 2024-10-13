@@ -1,5 +1,6 @@
-import { StyleSheet, Text, View, Image } from "react-native";
-import { Account } from "../@types/Account";
+import { StyleSheet, Text, View } from "react-native";
+import { Image } from "expo-image";
+import { Account } from "../@types/account";
 import { GridList, Card } from "react-native-ui-lib";
 import { Spacings } from "react-native-ui-lib/src/style";
 import { getBankLogo } from "../utils/formats";
@@ -54,7 +55,14 @@ const QRDisplayContainer = ({
 				showQrMenu();
 			}}
 		>
-			<Image source={getBankLogo(account)} style={styles.bankLogos} />
+			<Image
+				source={`https://raw.githubusercontent.com/ryuuzu/bank-logos/refs/heads/main/${account.bankType}.png`}
+				placeholder={require("../assets/main-logo.png")}
+				style={styles.bankLogos}
+				placeholderContentFit="contain"
+				allowDownscaling
+				contentFit="contain"
+			/>
 			<Text>{account.name}</Text>
 		</Card>
 	);
@@ -94,6 +102,7 @@ export const QRsContainer = ({
 const styles = StyleSheet.create({
 	qrsContainer: {
 		height: "30%",
+		width: "100%",
 		backgroundColor: "lightgray",
 	},
 	qrGridList: {
@@ -103,7 +112,6 @@ const styles = StyleSheet.create({
 	bankLogos: {
 		width: 150,
 		height: 80,
-		objectFit: "contain",
 	},
 	qrName: {
 		fontSize: 20,
