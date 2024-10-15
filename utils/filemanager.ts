@@ -29,7 +29,7 @@ export async function saveData(accountsData: Account[]) {
 	);
 }
 
-export async function readData() {
+export async function readData(): Promise<Account[]> {
 	await ensureDataFileExists();
 	const jsonData = await FileSystem.readAsStringAsync(dataFileUri);
 	return JSON.parse(jsonData);

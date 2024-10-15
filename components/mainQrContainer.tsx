@@ -2,14 +2,15 @@ import { StyleSheet, Text, View } from "react-native";
 import { Image } from "expo-image";
 import { getFormattedQrString } from "../utils/formats";
 import QRCode from "react-native-qrcode-svg";
-import { Account } from "../@types/account";
+import { FAB } from "react-native-paper";
 import React from "react";
+import { useGlobalStore } from "./store";
 
-type MainQrContainerProps = {
-	account: Account | null;
-};
+type MainQrContainerProps = {};
 
-export const MainQrContainer = ({ account }: MainQrContainerProps) => {
+export const MainQrContainer = ({}: MainQrContainerProps) => {
+	const { activeAccount: account } = useGlobalStore();
+
 	return (
 		<View style={styles.mainQrContainer}>
 			{account ? (
@@ -39,7 +40,7 @@ const styles = StyleSheet.create({
 		alignItems: "center",
 		// backgroundColor: "#c3c5c6",
 		justifyContent: "center",
-		rowGap: 5,
+		rowGap: 10,
 	},
 	bankLogo: {
 		width: 270,

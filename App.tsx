@@ -3,7 +3,8 @@ import { StatusBar } from "expo-status-bar";
 import { StyleSheet, Text, View } from "react-native";
 import { MainQrContainer } from "./components/mainQrContainer";
 import { QRsContainer } from "./components/qrsContainer";
-import { CameraView, CameraType, useCameraPermissions } from "expo-camera";
+import { Linking } from "react-native";
+import { CameraView, useCameraPermissions } from "expo-camera";
 import {
 	FAB,
 	Dialog,
@@ -13,23 +14,24 @@ import {
 	Button,
 } from "react-native-paper";
 import { Account, BankAccountData, eSewaAccountData } from "./@types/account";
-import { readData, saveData } from "./utils/filemanager";
 import { PaperProvider } from "react-native-paper";
 import { AccountForm } from "./components/accountForm";
-import { BarCodeScanner } from "expo-barcode-scanner";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { Platform } from "react-native";
 import { EventPressCoords } from "./@types/EventPress";
 import React from "react";
+import { useGlobalStore } from "./components/store";
 
 export default function App() {
-	const [accounts, setAccounts] = useState<Account[]>([]);
-	const [activeAccount, setActiveAccount] = useState<Account | null>(null);
+	const {
+		accounts,
+		addAccount: addAccountToStore,
+		deleteAccount: deleteAccountFromStore,
+		saveAccounts,
+		loadAccounts,
+		selectedAccount,
+	} = useGlobalStore();
 
-	// Menu for selected account
-	const [selectedAccount, setSelectedAccount] = useState<Account | null>(
-		null
-	);
 	const [qrMenuLocation, setQrMenuLocation] = useState<EventPressCoords>({
 		x: 0,
 		y: 0,
@@ -38,7 +40,6 @@ export default function App() {
 	const showQrMenu = () => setIsQrMenuVisible(true);
 	const hideQrMenu = () => {
 		setIsQrMenuVisible(false);
-		setSelectedAccount(null);
 	};
 
 	// Dialog for deleting account
@@ -69,14 +70,14 @@ export default function App() {
 			showSnackbar("Account already exists");
 			return false;
 		} else {
-			setAccounts([...accounts, newAccount]);
+			addAccountToStore(newAccount);
 			showSnackbar("Account added successfully");
 			return true;
 		}
 	};
 
 	const deleteAccount = (account: Account) => {
-		setAccounts(accounts.filter((acc) => acc.id !== account.id));
+		deleteAccountFromStore(account);
 		showSnackbar("Account deleted successfully");
 	};
 
@@ -102,7 +103,8 @@ export default function App() {
 		(async () => {
 			if (permission?.status === "denied") {
 				showSnackbar("Camera permission is required to scan QR Codes");
-			} else if (permission?.canAskAgain) {
+			}
+			if (permission?.canAskAgain) {
 				await requestPermission();
 			}
 		})();
@@ -132,7 +134,9 @@ export default function App() {
 				id:
 					qrData.accountName.toLowerCase().replaceAll(" ", "") +
 					qrData.accountNumber,
-				name: `${qrData.accountName}'s ${qrData.bankCode}`,
+				name: `${qrData.accountName.split(" ", 2)[0]}'s ${
+					qrData.bankCode
+				}`,
 				accountNumber: qrData.accountNumber,
 				accountName: qrData.accountName,
 				bankType: qrData.bankCode,
@@ -143,7 +147,7 @@ export default function App() {
 				id:
 					qrData.name.toLowerCase().replaceAll(" ", "") +
 					qrData.eSewa_id,
-				name: `${qrData.name}'s eSewa`,
+				name: `${qrData.name.split(" ", 2)[0]}'s eSewa`,
 				accountNumber: qrData.eSewa_id,
 				accountName: qrData.name,
 				bankType: "eSewa",
@@ -177,21 +181,17 @@ export default function App() {
 	};
 
 	const initializeAndSaveAccounts = () => {
-		const initialAccountsData = [
-			{
-				id: "es1",
-				name: "Ryuuzu's eSewa Account",
-				accountNumber: "9862957119",
-				accountName: "Utsav Gurmachhan Magar",
-				bankType: "eSewa",
-			},
-		];
-		setAccounts(initialAccountsData);
+		addAccount({
+			id: "es1",
+			name: "Ryuuzu's eSewa Account",
+			accountNumber: "9862957119",
+			accountName: "Utsav Gurmachhan Magar",
+			bankType: "eSewa",
+		});
 	};
 
 	useEffect(() => {
-		readData().then((savedAccounts) => {
-			setAccounts(savedAccounts);
+		loadAccounts().then((savedAccounts) => {
 			if (savedAccounts.length === 0) {
 				console.log(
 					`${Platform.OS}: No accounts found. Initializing with default accounts`
@@ -203,9 +203,8 @@ export default function App() {
 
 	useEffect(() => {
 		if (accounts.length > 0) {
-			saveData(accounts).then(() => {
+			saveAccounts().then(() => {
 				console.log(`${Platform.OS}: Data saved into the file`);
-				console.log(`${Platform.OS}:`, accounts);
 			});
 		}
 	}, [accounts]);
@@ -216,12 +215,9 @@ export default function App() {
 				<View style={styles.container}>
 					{accounts.length > 0 ? (
 						<>
-							<MainQrContainer account={activeAccount} />
+							<MainQrContainer />
 							<QRsContainer
-								activeAccount={activeAccount}
-								setActiveAccount={setActiveAccount}
 								accounts={accounts}
-								setSelectedAccount={setSelectedAccount}
 								showQrMenu={showQrMenu}
 								setQrMenuLocation={setQrMenuLocation}
 							/>
@@ -235,6 +231,40 @@ export default function App() {
 						onStateChange={onAddFABGroupStateChange}
 						icon={isAddFABGroupVisible ? "close" : "plus"}
 						actions={[
+							{
+								icon: "star-outline",
+								label: "Feedback",
+								onPress: () => {
+									Linking.canOpenURL(
+										"https://api.ryuuzu.xyz/short/qr-share-feedback"
+									).then((supported) => {
+										if (supported) {
+											Linking.openURL(
+												"https://api.ryuuzu.xyz/short/qr-share-feedback"
+											);
+										} else {
+											showSnackbar("An error occured ");
+										}
+									});
+								},
+							},
+							{
+								icon: "bug",
+								label: "Report a bug",
+								onPress: () => {
+									Linking.canOpenURL(
+										"https://api.ryuuzu.xyz/short/qr-share-bug-report"
+									).then((supported) => {
+										if (supported) {
+											Linking.openURL(
+												"https://api.ryuuzu.xyz/short/qr-share-bug-report"
+											);
+										} else {
+											showSnackbar("An error occured");
+										}
+									});
+								},
+							},
 							{
 								icon: "plus",
 								label: "Add new account",
@@ -327,8 +357,11 @@ export default function App() {
 								</Button>
 								<Button
 									onPress={() => {
-										deleteAccount(activeAccount!);
-										setSelectedAccount(null);
+										if (selectedAccount) {
+											deleteAccount(selectedAccount);
+										} else {
+											showSnackbar("Account not found");
+										}
 										hideDeleteAccountDialog();
 									}}
 								>

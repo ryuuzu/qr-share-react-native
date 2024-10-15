@@ -4,33 +4,28 @@ import { Account } from "../@types/account";
 import { GridList, Card } from "react-native-ui-lib";
 import { Spacings } from "react-native-ui-lib/src/style";
 import { EventPressCoords } from "../@types/EventPress";
+import { useGlobalStore } from "./store";
 
 type QRsContainerProps = {
 	accounts: Account[];
-	activeAccount: Account | null;
-	setActiveAccount: (account: Account | null) => void;
-	setSelectedAccount: (account: Account | null) => void;
 	showQrMenu: () => void;
 	setQrMenuLocation: (location: EventPressCoords) => void;
 };
 
 type QRDisplayContainerProps = {
 	account: Account;
-	activeAccount: Account | null;
-	setActiveAccount: (account: Account | null) => void;
-	setSelectedAccount: (account: Account | null) => void;
 	showQrMenu: () => void;
 	setQrMenuLocation: (location: EventPressCoords) => void;
 };
 
 const QRDisplayContainer = ({
 	account,
-	activeAccount,
-	setActiveAccount,
-	setSelectedAccount,
 	showQrMenu,
 	setQrMenuLocation,
 }: QRDisplayContainerProps) => {
+	const { activeAccount, setActiveAccount, setSelectedAccount } =
+		useGlobalStore();
+
 	return (
 		<Card
 			flex
@@ -46,11 +41,12 @@ const QRDisplayContainer = ({
 					: setActiveAccount(account);
 			}}
 			onLongPress={(e: any) => {
+				console.log(`Settings ${account.id} as active account`);
+				setSelectedAccount(account);
 				setQrMenuLocation({
 					x: e.event.nativeEvent.pageX,
 					y: e.event.nativeEvent.pageY,
 				});
-				setSelectedAccount(account);
 				showQrMenu();
 			}}
 		>
@@ -68,10 +64,7 @@ const QRDisplayContainer = ({
 };
 
 export const QRsContainer = ({
-	activeAccount,
 	accounts,
-	setActiveAccount,
-	setSelectedAccount,
 	showQrMenu,
 	setQrMenuLocation,
 }: QRsContainerProps) => {
@@ -85,10 +78,7 @@ export const QRsContainer = ({
 				listPadding={Spacings.s3}
 				renderItem={({ item }) => (
 					<QRDisplayContainer
-						activeAccount={activeAccount}
-						setActiveAccount={setActiveAccount}
 						account={item}
-						setSelectedAccount={setSelectedAccount}
 						showQrMenu={showQrMenu}
 						setQrMenuLocation={setQrMenuLocation}
 					/>
